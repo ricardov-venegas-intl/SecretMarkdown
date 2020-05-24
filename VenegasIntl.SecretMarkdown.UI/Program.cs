@@ -4,6 +4,11 @@
 
 using System;
 using System.Windows.Forms;
+using Microsoft.Extensions.DependencyInjection;
+using VenegasIntl.SecretMarkdown.Backend.ColorParser;
+using VenegasIntl.SecretMarkdown.Backend.Encryptor;
+using VenegasIntl.SecretMarkdown.Backend.Repositories;
+using VenegasIntl.SecretMarkdown.UI.Forms;
 
 namespace VenegasIntl.SecretMarkdown.UI
 {
@@ -21,9 +26,18 @@ namespace VenegasIntl.SecretMarkdown.UI
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new Form1())
+
+            var servicesCollection = new ServiceCollection();
+            var serviceProvider = servicesCollection
+                .AddScoped<IColorParser, SimpleMarkdownColorParser>()
+                .AddScoped<ITextEncryptor, AesTextEncryptor>()
+                .AddScoped<INotesRepository, NotesRepository>()
+                .AddScoped<MainForm>()
+                .BuildServiceProvider();
+
+            using (var mainForm = serviceProvider.GetService<MainForm>())
             {
-                Application.Run(form);
+                Application.Run(mainForm);
             }
         }
     }
