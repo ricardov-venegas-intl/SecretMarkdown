@@ -4,6 +4,7 @@
 
 using System;
 using System.Windows.Forms;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VenegasIntl.SecretMarkdown.Backend.ColorParser;
 using VenegasIntl.SecretMarkdown.Backend.Encryptor;
@@ -20,12 +21,19 @@ namespace VenegasIntl.SecretMarkdown.UI
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
+        /// <param name="args">Program arguments.</param>
         [STAThread]
-        public static void Main()
+        public static void Main(string[] args)
         {
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+                .Build();
 
             var servicesCollection = new ServiceCollection();
             var serviceProvider = servicesCollection
@@ -33,6 +41,7 @@ namespace VenegasIntl.SecretMarkdown.UI
                 .AddScoped<ITextEncryptor, AesTextEncryptor>()
                 .AddScoped<INotesRepository, NotesRepository>()
                 .AddScoped<MainForm>()
+                .AddSingleton<IConfiguration>(configuration)
                 .BuildServiceProvider();
 
             using (var mainForm = serviceProvider.GetService<MainForm>())

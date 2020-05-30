@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace VenegasIntl.SecretMarkdown.Backend.Repositories
 {
@@ -20,8 +21,9 @@ namespace VenegasIntl.SecretMarkdown.Backend.Repositories
         /// <summary>
         /// Initializes a new instance of the <see cref="NotesRepository"/> class.
         /// </summary>
-        public NotesRepository()
-            : this("notest.secret")
+        /// <param name="configuration">Configuration.</param>
+        public NotesRepository(IConfiguration configuration)
+            : this((configuration ?? throw new ArgumentNullException(nameof(configuration)))["NotesFileName"])
         {
             return;
         }
