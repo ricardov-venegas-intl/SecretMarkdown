@@ -35,11 +35,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.mainView = new System.Windows.Forms.RichTextBox();
+            this.refreshTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // mainView
             // 
+            this.mainView.AcceptsTab = true;
             this.mainView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -53,6 +56,10 @@
             this.mainView.Text = "";
             this.mainView.TextChanged += new System.EventHandler(this.MainView_TextChanged);
             this.mainView.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainView_KeyDown);
+            // 
+            // refreshTimer
+            // 
+            this.refreshTimer.Interval = 250;
             // 
             // MainForm
             // 
@@ -70,6 +77,7 @@
         #endregion
 
         private System.Windows.Forms.RichTextBox mainView;
+        private System.Windows.Forms.Timer refreshTimer;
     }
 }
 

@@ -3,7 +3,9 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 using VenegasIntl.SecretMarkdown.Backend.ColorParser;
@@ -19,6 +21,8 @@ namespace VenegasIntl.SecretMarkdown.UI.Forms
     {
         // File Header
         private const string FileHeader = "VenegasIntl.SecretMarkdow";
+
+        private List<StyleRegion> currentRegionStyles = new List<StyleRegion>();
 
         // Dependant services
         private IColorParser colorParser;
@@ -62,6 +66,16 @@ namespace VenegasIntl.SecretMarkdown.UI.Forms
 
             // No password yet
             this.password = null;
+
+            // Refresh Timer
+            this.refreshTimer.Tick += this.RefreshTimer_Tick;
+        }
+
+        private void RefreshTimer_Tick(object sender, EventArgs e)
+        {
+            this.refreshTimer.Enabled = false;
+            this.refreshTimer.Stop();
+            this.mainView.Refresh();
         }
 
         /// <summary>
@@ -79,6 +93,11 @@ namespace VenegasIntl.SecretMarkdown.UI.Forms
             finally
             {
                 NativeMethods.LockWindowUpdate(IntPtr.Zero);
+
+                // Reset timer
+                this.refreshTimer.Enabled = true;
+                this.refreshTimer.Stop();
+                this.refreshTimer.Start();
             }
         }
 
@@ -151,24 +170,37 @@ namespace VenegasIntl.SecretMarkdown.UI.Forms
             int currentSelectionStart = this.mainView.SelectionStart;
             int currentSelectionLength = this.mainView.SelectionLength;
 
-            var colorRegions = this.colorParser.Parse(this.mainView.Text);
+            var colorRegions = this.colorParser.Parse(this.mainView.Text).ToList();
+            var stillMatching = true;
+            var currentRegionIndex = 0;
             foreach (var region in colorRegions)
             {
-                var font = (region.ColorStyle == ColorStyle.Header1) ? this.header1Font :
-                    (region.ColorStyle == ColorStyle.Header2) ? this.header2Font :
-                    (region.ColorStyle == ColorStyle.Header3) ? this.header3Font :
-                    (region.ColorStyle == ColorStyle.ListPrefix) ? this.listFont :
-                    this.normalFont;
+                if (stillMatching == true
+                    && currentRegionIndex < this.currentRegionStyles.Count
+                    && this.currentRegionStyles[currentRegionIndex].Equals(region))
+                {
+                    // skip matching regions
+                    currentRegionIndex++;
+                }
+                else
+                {
+                    var font = (region.ColorStyle == ColorStyle.Header1) ? this.header1Font :
+                        (region.ColorStyle == ColorStyle.Header2) ? this.header2Font :
+                        (region.ColorStyle == ColorStyle.Header3) ? this.header3Font :
+                        (region.ColorStyle == ColorStyle.ListPrefix) ? this.listFont :
+                        this.normalFont;
 
-                var color = (region.ColorStyle == ColorStyle.Header1) ? Color.White :
-                    (region.ColorStyle == ColorStyle.Header2) ? Color.LightBlue :
-                    (region.ColorStyle == ColorStyle.Header3) ? Color.LightCyan :
-                    (region.ColorStyle == ColorStyle.ListPrefix) ? Color.LightSkyBlue :
-                    Color.LightGray;
+                    var color = (region.ColorStyle == ColorStyle.Header1) ? Color.White :
+                        (region.ColorStyle == ColorStyle.Header2) ? Color.LightBlue :
+                        (region.ColorStyle == ColorStyle.Header3) ? Color.LightCyan :
+                        (region.ColorStyle == ColorStyle.ListPrefix) ? Color.LightSkyBlue :
+                        Color.LightGray;
 
-                this.mainView.Select(region.StartPosition, region.Length);
-                this.mainView.SelectionFont = font;
-                this.mainView.SelectionColor = color;
+                    this.mainView.Select(region.StartPosition, region.Length);
+                    this.mainView.SelectionFont = font;
+                    this.mainView.SelectionColor = color;
+                    stillMatching = false;
+                }
             }
 
             // Restore Cursor
