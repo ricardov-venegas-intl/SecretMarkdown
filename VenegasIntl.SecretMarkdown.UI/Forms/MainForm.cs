@@ -45,6 +45,8 @@ namespace VenegasIntl.SecretMarkdown.UI.Forms
         {
             this.InitializeComponent();
 
+            this.Icon = Properties.Resources.SecretMarkdown;
+
             // Services
             this.colorParser = colorParser;
             this.textEncryptor = textEncryptor;
