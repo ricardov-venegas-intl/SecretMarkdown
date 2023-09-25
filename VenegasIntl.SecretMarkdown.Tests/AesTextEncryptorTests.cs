@@ -21,7 +21,8 @@ namespace VenegasIntl.SecretMarkdown.Tests
         [TestMethod]
         public void SimpleRoundTrip()
         {
-            var secretText = "Hello World";
+            // Long test
+            var secretText = string.Concat(Enumerable.Repeat("Hello World ", 1023 * 1023));
             var password = "MySecretPassword";
             ITextEncryptor textEncryptor = new AesTextEncryptor();
             var encryptedText = textEncryptor.EncryptText(secretText, password);

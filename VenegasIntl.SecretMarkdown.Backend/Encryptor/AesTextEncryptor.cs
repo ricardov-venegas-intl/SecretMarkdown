@@ -60,11 +60,9 @@ namespace VenegasIntl.SecretMarkdown.Backend.Encryptor
                         var iv = pdb.GetBytes(aes.BlockSize / 8);
                         aes.Key = key;
                         aes.IV = iv;
-                        CryptoStream cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-                        var decryptedData = new byte[encryptedContent.Length];
-                        var bytesDecrypted = cs.Read(decryptedData, 0, decryptedData.Length);
-                        cs.Close();
-                        var contentWithoutFiller = decryptedData.Skip(256).Take(bytesDecrypted).ToArray();
+                        var decryptor = aes.CreateDecryptor();
+                        var decryptedData = decryptor.TransformFinalBlock(encryptedContent, 0, encryptedContent.Length);
+                        var contentWithoutFiller = decryptedData.Skip(256).ToArray();
                         return Encoding.UTF8.GetString(contentWithoutFiller).TrimEnd('\0');
                     }
                 }
@@ -105,6 +103,8 @@ namespace VenegasIntl.SecretMarkdown.Backend.Encryptor
             // Convert the text to bytes
             var clearBytes = Encoding.UTF8.GetBytes(content);
 
+            var bytesToEncrypt = filler.Concat(clearBytes).ToArray();
+
             // Generate the aes keys from the password, iteration count is larger for smaller passwords
             int iterationCount = 1023 + (Math.Max(63, 127 - password.Length) * 31);
             using (var pdb = new Rfc2898DeriveBytes(password, salt, iterationCount, HashAlgorithmName.SHA512))
@@ -120,13 +120,9 @@ namespace VenegasIntl.SecretMarkdown.Backend.Encryptor
                         aes.Key = key;
                         aes.IV = iv;
 
-                        // Encrypt  random filler + content
-                        CryptoStream cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-                        cs.Write(filler, 0, filler.Length);
-                        cs.Write(clearBytes, 0, clearBytes.Length);
-                        cs.Close();
-                        ms.Flush();
-                        return ms.ToArray();
+                        var encryptor = aes.CreateEncryptor();
+                        var encryptedBytes = encryptor.TransformFinalBlock(bytesToEncrypt, 0, bytesToEncrypt.Length);
+                        return salt.Concat(encryptedBytes).ToArray();
                     }
                 }
             }
